@@ -1,0 +1,9 @@
+#message-list{
+	max-height: 300px;
+	margin-bottom: 10px;
+	overflow: auto;
+  }
+  
+  #messageArea {
+	display: none;
+  }

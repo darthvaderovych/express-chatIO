@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Chat</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <div class="container mt-3">
+    <div class="row justify-content-center" id="userFormArea">
+      <div class="col-md-4">
+        <form id="userForm" action="/" method="post">
+          <div class="form-group">
+            <h4 class="text-center">Enter yor email</h4>
+            <input class="form-control" id="username" type="email" name="email" placeholder="Email">
+          </div>
+          <button class="btn btn-block btn-secondary" type="submit">Submit</button>
+        </form>
+      </div>
+    </div>
+    <div class="row" id="messageArea">
+      <div class="col-9 float-left">
+        <ul class="list-group my-2" id="message-list">
+          <div id="chat"></div>
+        </ul>
+        <form id="messageForm">
+          <div class="form-group">
+            <textarea class="form-control" id="message" placeholder="Enter message"></textarea><br>
+            <input class="btn btn-secondary" type="submit" value="Send Message">
+          </div>
+        </form>
+      </div>
+      <div class="col-3 float-right">
+        <h3>Online Users</h3>
+        <ul class="list-group" id="users"></ul>
+      </div>
+    </div>
+  </div>
+</body>
+<script>
+  $(function() {
+    let socket = io();
+    let $messageForm = $('#messageForm');
+    let $message = $('#message');
+    let $chat = $('#chat');
+    let $messageArea = $('#messageArea');
+    let $userFormArea = $('#userFormArea');
+    let $userForm = $('#userForm');
+    let $users = $('#users');
+    let $username = $('#username');
+
+    $messageForm.submit(function(e) {
+      e.preventDefault();
+      socket.emit('send message', $message.val());
+      $message.val('');
+    });
+
+    socket.on('new message', function(data) {
+      $chat.append('<div class="well ml-3"><strong>' + data.user + ': </strong>' + data.msg + '</div>');
+    });
+
+    $userForm.submit(function(e) {
+      e.preventDefault();
+      socket.emit('new user', $username.val(), function(data) {
+        if (data) {
+          $userFormArea.hide();
+          $messageArea.show();
+        }
+      });
+      $username.val('');
+    });
+
+    socket.on('get users', function(data) {
+      let html = '';
+      for (i = 0; i < data.length; i++) {
+        html += '<li class="list-group-item">' + data[i] + '</li>';
+      }
+      $users.html(html);
+    });
+
+    socket.on('chat history', function(data) {
+      $chat.find('div').remove();
+      $.each(data, function() {
+        $chat.append('<div class="well ml-3"><strong>' + this.author + ': </strong>' + this.message + '</div>');
+      });
+    })
+  })
+</script>
+
+</html>
